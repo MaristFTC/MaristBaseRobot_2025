@@ -642,25 +642,23 @@ public class MaristBaseRobot2025_Quad {
         return offset;
     }
 
-    public void driveFieldCentric(double gamepadXPow, double gamepadYPow, double gamepadRotPow, double DRIVE_SPEED){
+    // Updated Mr. Michaud Aug 25
+    public void driveFieldCentric(double gamepadXPow, double gamepadYPow, double gamepadRotPow, double robotHeading){
 
-        double gamepadTheta = Math.atan2(gamepadYPow, gamepadXPow);
-        double diffTheta = gamepadTheta - Math.toRadians(getOrientation());
-
-        double xpow= Math.cos(diffTheta ) *DRIVE_SPEED;
-        double ypow= Math.sin(diffTheta)*DRIVE_SPEED;
-        double rotpow = gamepadRotPow*DRIVE_SPEED;
-
-        double leftRearPower = ypow+ xpow- rotpow ;
-        double leftFrontPower = ypow- xpow- rotpow ;
-        double rightRearPower = ypow- xpow+ rotpow ;
-        double rightFrontPower = ypow+ xpow+ rotpow ;
+        double gamepadTheta = Math.atan2(gamepadYPow, gamepadXPow) - Math.PI/2;
+        double velocity = Math.sqrt(Math.pow(gamepadXPow, 2) + Math.pow(gamepadYPow, 2));
+        double diffTheta = gamepadTheta + Math.toRadians(robotHeading);
+        double rotpow = gamepadRotPow;
+        
+        double v1= velocity * Math.sin(diffTheta + Math.PI/4) - rotpow; // leftfront
+        double v2 = velocity * Math.cos(diffTheta + Math.PI/4) + rotpow; // rightfront
+        double v3 = velocity * Math.cos(diffTheta + Math.PI/4) - rotpow; // leftrear
+        double v4 = velocity * Math.sin(diffTheta + Math.PI/4) + rotpow; // rightrear
             
-        leftFront.setPower(leftFrontPower);
-        leftRear.setPower(leftRearPower);
-        rightFront.setPower(rightFrontPower);
-        rightRear.setPower(rightRearPower);
-
+        leftFront.setPower(v1);
+        leftRear.setPower(v3);
+        rightFront.setPower(v2);
+        rightRear.setPower(v4);
         
     }
 
