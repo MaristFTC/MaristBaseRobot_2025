@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
 import com.qualcomm.robotcore.hardware.TouchSensor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -35,6 +36,10 @@ import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
  * Added methods for field centric drive in Base robot
  * Revision for 2024 Updated getBrightness() to return value from HSV
  * 
+ * Revision for 2025-2026 DECODE by michaudc
+ * Updated driveFieldCentric to fix errors
+ * Set leftArm to DcMotorEx for Velocity control of Launcher
+ * 
  * This class models the physical structure of the robot with instances
  * of motors, servos, and sensors.
  *
@@ -50,6 +55,7 @@ import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
  * Servo Channel: leftHand:         "lefthand"
  * Servo Channel: rightHand:        "righthand"
  * Touch Sensor:  touch             "touch" ** Digital 1 in Config
+ * GoBilda PinPoint: odo            "odo" 
  * Color Sensor:  colorSensor       "colorSensor"
  *
  */
@@ -61,7 +67,7 @@ public class MaristBaseRobot2025_Quad {
     public DcMotor leftRear    = null;
     public DcMotor rightRear   = null;
     public DcMotor rightArm    = null;
-    public DcMotor leftArm     = null;
+    public DcMotorEx leftArm     = null;
     public Servo rightHand    = null;
     public Servo leftHand   = null;
 
@@ -108,7 +114,7 @@ public class MaristBaseRobot2025_Quad {
         rightFront  = hwMap.dcMotor.get("rightfront");
         leftRear     = hwMap.dcMotor.get("leftrear");
         rightRear    = hwMap.dcMotor.get("rightrear");
-        leftArm      = hwMap.dcMotor.get("leftarm");
+        leftArm      = (DcMotorEx) hwMap.get(DcMotor.class, "leftarm");
         rightArm     = hwMap.dcMotor.get("rightarm");
         leftFront.setDirection(DcMotor.Direction.FORWARD); // Set to REVERSE if using AndyMark motors
         rightFront.setDirection(DcMotor.Direction.REVERSE);// Set to FORWARD if using AndyMark motors
