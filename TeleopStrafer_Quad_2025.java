@@ -6,10 +6,15 @@ All rights reserved.
 Modified by michaudc 2017
 Additional modifications by michaudc 2021
 Modifications for CENTERSTAGE by michaudc 2023
+Modifiations for DECODE by michaudc 2025
 */
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.Range;
@@ -36,15 +41,12 @@ public class TeleopStrafer_Quad_2025 extends OpMode {
     /* Declare OpMode members. */
     MaristBaseRobot2025_Quad robot   = new MaristBaseRobot2025_Quad(); // use the class created to define a Robot's hardware
                                                          // could also use HardwarePushbotMatrix class.
-    double          clawOffset  = 0.0 ;                  // Servo mid position
-    final double    CLAW_SPEED  = 0.02 ;                 // sets rate to move servo
+    GoBildaPinpointDriver odo;
     
-    int armPos = 0;
-    private double ARM_SPEED = 0.7;
-    private double DRIVE_SPEED = 0.5;
-
-    private double ClIMB_POWER = 0.8;
-
+    // Values based on DcMotorEx and .setVelocity()    
+    private double SHOOTER_FULL = -1260;
+    private double SHOOTER_HALF = -600;
+    private double SHOOTER_VELOCITY = 0;
 
     /*
      * Code to run ONCE when the driver hits INIT
@@ -56,6 +58,47 @@ public class TeleopStrafer_Quad_2025 extends OpMode {
          */
         robot.init(hardwareMap);
 
+        // Initialize the GoBilda Odometry Computer
+        odo = hardwareMap.get(GoBildaPinpointDriver.class, "odo");
+        
+        /*
+        Set the odometry pod positions relative to the point that the odometry computer tracks around.
+        The X pod offset refers to how far sideways from the tracking point the
+        X (forward) odometry pod is. Left of the center is a positive number,
+        right of center is a negative number. the Y pod offset refers to how far forwards from
+        the tracking point the Y (strafe) odometry pod is. forward of center is a positive number,
+        backwards is a negative number.
+         */
+        odo.setOffsets(90.0, 0.0, DistanceUnit.MM); //these are tuned for 3110-0002-0001 Product Insight #1
+
+        /*
+        Set the kind of pods used by your robot. If you're using goBILDA odometry pods, select either
+        the goBILDA_SWINGARM_POD, or the goBILDA_4_BAR_POD.
+        If you're using another kind of odometry pod, uncomment setEncoderResolution and input the
+        number of ticks per unit of your odometry pod.
+         */
+        odo.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
+        //odo.setEncoderResolution(13.26291192, DistanceUnit.MM);
+
+
+        /*
+        Set the direction that each of the two odometry pods count. The X (forward) pod should
+        increase when you move the robot forward. And the Y (strafe) pod should increase when
+        you move the robot to the left.
+         */
+        odo.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.REVERSED, GoBildaPinpointDriver.EncoderDirection.REVERSED);
+
+        /*
+        Before running the robot, recalibrate the IMU. This needs to happen when the robot is stationary
+        The IMU will automatically calibrate when first powered on, but recalibrating before running
+        the robot is a good idea to ensure that the calibration is "good".
+        resetPosAndIMU will reset the position to 0,0,0 and also recalibrate the IMU.
+        This is recommended before you run your autonomous, as a bad initial calibration can cause
+        an incorrect starting value for x, y, and heading.
+         */
+        //odo.recalibrateIMU();
+        odo.resetPosAndIMU();
+
         // Send telemetry message to signify robot waiting;
         telemetry.addData("Say", "Robot Ready");    //
 
@@ -65,10 +108,9 @@ public class TeleopStrafer_Quad_2025 extends OpMode {
         robot.leftRear.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         robot.rightRear.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         
-        robot.leftArm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        //robot.leftArm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         robot.leftArm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        armPos = robot.leftArm.getCurrentPosition();
-        
+        robot.rightArm.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);        
 
     }
 
@@ -92,100 +134,79 @@ public class TeleopStrafer_Quad_2025 extends OpMode {
      */
     @Override
     public void loop() {
+        
+        /*
+        Request an update from the Pinpoint odometry computer. This checks almost all outputs
+        from the device in a single I2C read.
+         */
+        odo.update();
+        
+        // Variables for Joystick Paddle input
         double leftX;
         double leftY;
         double rightX;
-
-        // Strafer Mode
-        /*
-        leftX = gamepad1.left_stick_x * DRIVE_SPEED;
-        leftY = gamepad1.left_stick_y * DRIVE_SPEED;
-        rightX = gamepad1.right_stick_x * DRIVE_SPEED;
-        
-        double leftRearPower = leftY + leftX - rightX;
-        double leftFrontPower = leftY - leftX - rightX;
-        double rightRearPower = leftY - leftX + rightX;
-        double rightFrontPower = leftY + leftX + rightX;
-        
-        robot.leftFront.setPower(leftFrontPower);
-        robot.leftRear.setPower(leftRearPower);
-        robot.rightFront.setPower(rightFrontPower);
-        robot.rightRear.setPower(rightRearPower);
-        */
-
+        double rightY;
 
         // Strafer Mode
         leftX = gamepad1.left_stick_x;
         leftY = gamepad1.left_stick_y;
         rightX = gamepad1.right_stick_x ;
-        //robot.driveFieldCentric(leftX, leftY, rightX, DRIVE_SPEED);
-        robot.driveStrafer(leftX, leftY, rightX);
-
+        rightY = gamepad1.right_stick_y;
         
-        // Use gamepad left & right Bumpers to open and close the claws
-        // This assumes two Servos in opposite position
-        if (gamepad1.right_bumper) {         // CLOSE
-            robot.leftHand.setPosition(0);   // You will need to adjust these numbers 
-            robot.rightHand.setPosition(1);  // You will need to adjust these numbers
-        }
-        else if (gamepad1.left_bumper) {    // OPEN
-            robot.leftHand.setPosition(1);  // You will need to adjust these numbers 
-            robot.rightHand.setPosition(0); // You will need to adjust these numbers 
-        }
-            
-        // Use dpad buttons to move right arm motor
+        // For Field Centric
+        Pose2D pose = odo.getPosition();
+        double heading = pose.getHeading(AngleUnit.DEGREES);
+        //robot.driveFieldCentric(leftX, leftY, rightX, heading);
         
-        if (gamepad1.dpad_up)
-            robot.rightArm.setPower(ClIMB_POWER);
-        else if (gamepad1.dpad_down)
-            robot.rightArm.setPower(-ClIMB_POWER);
-        else
-            robot.rightArm.setPower(0.0);
-
-        // Control Arm with Right and Left Triggers
-        double armMotorPower = gamepad1.right_trigger - gamepad1.left_trigger;
-        // Limit Power to -0.4 to 0.4
-        if (armMotorPower > 0.1) {
-            ARM_SPEED = 0.7;
-            armPos += gamepad1.right_trigger * 10;
-        }
-
-        if (armMotorPower < -0.1) {
-            ARM_SPEED = 0.7;
-            armPos -= gamepad1.left_trigger * 10;
-        }
-
-        // Boundary Check - Adjust these numbers as needed
-        // Lower Boundary
-        if (armPos < 0) {
-            armPos = 0;
-        }
-
-        // Upper Boundary
-        if (armPos > 600) {
-            armPos = 600;
-        }
-
-        // Presets: Adjust as Needed
-        if (gamepad1.y)  {
-            ARM_SPEED = 0.3;
-            armPos = 500; // Arm Up
-        }
-
+        // Reset Odometry Computer Heading and Location
         if (gamepad1.a) {
-            ARM_SPEED = 0.3;
-            armPos = 50; // Arm in Position for Driving / Down
+            odo.resetPosAndIMU();
+        }
+        
+        // For Robot Centric
+        robot.driveStrafer(leftX, leftY, rightX);
+        
+        // Launcher Value Settings based on dpad
+        if (gamepad1.dpad_up) {
+            SHOOTER_VELOCITY = SHOOTER_FULL;
+        }
+        if (gamepad1.dpad_left) {
+            SHOOTER_VELOCITY += 1;
+        }
+        if (gamepad1.dpad_right) {
+            SHOOTER_VELOCITY -= 1;
+        }
+        if (gamepad1.dpad_down) {
+            SHOOTER_VELOCITY = 0;
+        }
+        // Range Checking - leftArm should not go backwards
+        if (SHOOTER_VELOCITY > 0) {
+            SHOOTER_VELOCITY = 0;
+        }
+        // Set the leftArm to the proper velocity
+        robot.leftArm.setVelocity(SHOOTER_VELOCITY);
+        
+        // Feeder Code - Continous Rotation Servos
+        if (gamepad1.left_trigger > 0.5) {
+            robot.leftHand.setPosition(1);
+            robot.rightHand.setPosition(0);
+        }
+        else if (gamepad1.right_trigger > 0.5) {
+            robot.leftHand.setPosition(0);
+            robot.rightHand.setPosition(1);
+        }
+        else {
+            robot.leftHand.setPosition(0.5);
+            robot.rightHand.setPosition(0.5);
         }
 
-        //robot.leftArm.setPower(armMotorPower);
-        robot.leftArm.setTargetPosition(armPos);
-        robot.leftArm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        robot.leftArm.setPower(ARM_SPEED);
-
+        // Intake Code
+        //TODO: Finish This
         
-
-        // Send telemetry message to signify robot running;
-        telemetry.addData("claw",  "Offset = %.2f", clawOffset);
+        // Diagnostic Outputs - Velocity of Launcher Motor (leftArm)
+        double velocity = robot.leftArm.getVelocity();
+        telemetry.addData("Velocity", velocity);
+        telemetry.update();
 
     }
 
