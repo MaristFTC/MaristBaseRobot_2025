@@ -6,6 +6,7 @@ All rights reserved.
 Modified by michaudc 2017
 Additional modifications by michaudc 2021
 Modifications for CENTERSTAGE by michaudc 2023
+Modifications for DECODE by michaudc 2025
 */
 package org.firstinspires.ftc.teamcode;
 
@@ -31,18 +32,14 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
- * This file provides basic Telop driving for a Pushbot robot.
+ * This file provides basic Telop driving for a Quad Robot.
  * The code is structured as an Iterative OpMode
  *
- * This OpMode uses the common Pushbot hardware class to define the devices on the robot.
- * All device access is managed through the HardwarePushbot class.
- *
- * This particular OpMode executes a basic Tank Drive Teleop for a PushBot
- * It raises and lowers the claw using the Gampad Y and A buttons respectively.
- * It also opens and closes the claws slowly using the left and right Bumper buttons.
- *
- * Use Android Studios to Copy this Class, and Paste it into your team's code folder with a new name.
- * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
+ * This OpMode uses the MaristBaseRobot hardware class to define the devices on the robot.
+ * All device access is managed through the MaristBaseRobot class.
+ * 
+ * Additional Methods added for Use of Webcam and April Tags for DECODE 2025 by michaudc
+ * 
  */
 
 @TeleOp(name="MaristBot2025: Teleop Strafer 2025", group="Training")
@@ -51,8 +48,6 @@ public class TeleopStrafer_Quad_2025 extends OpMode {
 
     /* Declare OpMode members. */
     MaristBaseRobot2025_Quad robot   = new MaristBaseRobot2025_Quad(); // use the class created to define a Robot's hardware
-                                                         // could also use HardwarePushbotMatrix class.
-    GoBildaPinpointDriver odo;
     
     double          clawOffset  = 0.0 ;                  // Servo mid position
     final double    CLAW_SPEED  = 0.02 ;                 // sets rate to move servo
@@ -66,18 +61,18 @@ public class TeleopStrafer_Quad_2025 extends OpMode {
 
     private double ClIMB_POWER = 0.8;
     
-    private double SHOOTER_FULL = -1520;
-    private double SHOOTER_HALF = -1420;
+    private double SHOOTER_FULL = -1600;
+    private double SHOOTER_HALF = -1500;
     private double SHOOTER_VELOCITY = 0;
     
     private double NEW_P = 160;
     private double NEW_I = 1.5;
     private double NEW_D = 0;
     
-    
     // for Camera
     // Adjust these numbers to suit your robot.
-    final double DESIRED_DISTANCE = 55.0; //  this is how close the camera should get to the target (inches)
+    final double DESIRED_DISTANCE = 45.0; //  this is how close the camera should get to the target (inches)
+    final double DESIRED_HEADING = 5; 
 
     //  Set the GAIN constants to control the relationship between the measured position error, and how much power is
     //  applied to the drive motors to correct the error.
@@ -106,7 +101,6 @@ public class TeleopStrafer_Quad_2025 extends OpMode {
          * The init() method of the hardware class does all the work here
          */
         robot.init(hardwareMap);
-        odo = hardwareMap.get(GoBildaPinpointDriver.class, "odo");
         
         boolean targetFound     = false;    // Set to true when an AprilTag target is detected
         double  drive           = 0;        // Desired forward power/speed (-1 to +1)
@@ -115,47 +109,6 @@ public class TeleopStrafer_Quad_2025 extends OpMode {
 
         // Initialize the Apriltag Detection process
         initAprilTag();
-
-        /*
-        Set the odometry pod positions relative to the point that the odometry computer tracks around.
-        The X pod offset refers to how far sideways from the tracking point the
-        X (forward) odometry pod is. Left of the center is a positive number,
-        right of center is a negative number. the Y pod offset refers to how far forwards from
-        the tracking point the Y (strafe) odometry pod is. forward of center is a positive number,
-        backwards is a negative number.
-         */
-        odo.setOffsets(90.0, 0.0, DistanceUnit.MM); //these are tuned for 3110-0002-0001 Product Insight #1
-
-        /*
-        Set the kind of pods used by your robot. If you're using goBILDA odometry pods, select either
-        the goBILDA_SWINGARM_POD, or the goBILDA_4_BAR_POD.
-        If you're using another kind of odometry pod, uncomment setEncoderResolution and input the
-        number of ticks per unit of your odometry pod.
-         */
-        odo.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
-        //odo.setEncoderResolution(13.26291192, DistanceUnit.MM);
-
-
-        /*
-        Set the direction that each of the two odometry pods count. The X (forward) pod should
-        increase when you move the robot forward. And the Y (strafe) pod should increase when
-        you move the robot to the left.
-         */
-        odo.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.REVERSED, GoBildaPinpointDriver.EncoderDirection.REVERSED);
-
-        /*
-        Before running the robot, recalibrate the IMU. This needs to happen when the robot is stationary
-        The IMU will automatically calibrate when first powered on, but recalibrating before running
-        the robot is a good idea to ensure that the calibration is "good".
-        resetPosAndIMU will reset the position to 0,0,0 and also recalibrate the IMU.
-        This is recommended before you run your autonomous, as a bad initial calibration can cause
-        an incorrect starting value for x, y, and heading.
-         */
-        //odo.recalibrateIMU();
-        odo.resetPosAndIMU();
-        
-
-        
 
         // Send telemetry message to signify robot waiting;
         telemetry.addData("Say", "Robot Ready");    //
@@ -170,19 +123,15 @@ public class TeleopStrafer_Quad_2025 extends OpMode {
         robot.leftArm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         armPos = robot.leftArm.getCurrentPosition();
         
-        // Set PID
+        // Set PID for Launcher
         PIDCoefficients pidSettings = new PIDCoefficients(NEW_P, NEW_I, NEW_D);
         robot.leftArm.setPIDCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidSettings);
-        
-        if (USE_WEBCAM)
-            setManualExposure(6, 250);  // Use low exposure time to reduce motion blur
 
         // Wait for driver to press start
         telemetry.addData("Camera preview on/off", "3 dots, Camera Stream");
         telemetry.addData(">", "Touch START to start OpMode");
         telemetry.update();
         
-
     }
 
     /*
@@ -206,12 +155,6 @@ public class TeleopStrafer_Quad_2025 extends OpMode {
     @Override
     public void loop() {
         
-        /*
-        Request an update from the Pinpoint odometry computer. This checks almost all outputs
-        from the device in a single I2C read.
-         */
-        odo.update();
-        
         double leftX;
         double leftY;
         double rightX;
@@ -223,10 +166,6 @@ public class TeleopStrafer_Quad_2025 extends OpMode {
         leftY = gamepad1.left_stick_y;
         rightX = gamepad1.right_stick_x ;
         rightY = gamepad1.right_stick_y;
-        
-        Pose2D pose = odo.getPosition();
-        double heading = pose.getHeading(AngleUnit.DEGREES);
-        //robot.driveFieldCentric(leftX, leftY, rightX, heading);
         
         targetFound = false;
         desiredTag  = null;
@@ -268,7 +207,7 @@ public class TeleopStrafer_Quad_2025 extends OpMode {
 
             // Determine heading, range and Yaw (tag image rotation) error so we can use them to control the robot automatically.
             double  rangeError      = (desiredTag.ftcPose.range - DESIRED_DISTANCE);
-            double  headingError    = desiredTag.ftcPose.bearing;
+            double  headingError    = desiredTag.ftcPose.bearing - DESIRED_HEADING;
             double  yawError        = desiredTag.ftcPose.yaw;
 
             // Use the speed and turn "gains" to calculate how we want the robot to move.
@@ -290,12 +229,6 @@ public class TeleopStrafer_Quad_2025 extends OpMode {
         robot.driveStrafer(leftX, leftY, rightX);
         //robot.driveTankTwoWheel(leftY, rightY);
         //sleep(10);
-    
-        
-        if (gamepad1.a) {
-            odo.resetPosAndIMU();
-        }
-
         
         // Shooter
         if (gamepad1.dpad_up) {
@@ -321,25 +254,31 @@ public class TeleopStrafer_Quad_2025 extends OpMode {
         
         // Feeder
         if (gamepad1.left_trigger > 0.5) {
-            robot.leftHand.setPosition(1);
-            robot.rightHand.setPosition(0);
+            robot.indexMotor.setPower(0.5);
         }
-        else if (gamepad1.right_trigger > 0.5) {//  && robot.leftArm.getVelocity() < -1510 && robot.leftArm.getVelocity() > -1550) {
-            robot.leftHand.setPosition(0);
-            robot.rightHand.setPosition(1);
+        else if (gamepad1.right_trigger > 0.5) {
+            robot.indexMotor.setPower(-0.5);
         }
         else {
-            robot.leftHand.setPosition(0.5);
-            robot.rightHand.setPosition(0.5);
+            robot.indexMotor.setPower(0);
         }
         
-        //pastPos = armPos;
+        // Intake
+        if (gamepad1.a) {
+            robot.rightArm.setPower(0);
+        }
+        if (gamepad1.b) {
+            robot.rightArm.setPower(0.7);
+        }
+        if (gamepad1.x) {
+            robot.rightArm.setPower(-0.7);
+        }
         
         // Get PID Information
         PIDCoefficients pidValues = robot.leftArm.getPIDCoefficients(DcMotor.RunMode.RUN_USING_ENCODER);
         telemetry.addData("PID Values", "%.04f, %.04f, %.04f", pidValues.p, pidValues.i, pidValues.d);
         
-        //telemetry.addData("delta", deltaPos);
+        // Display Launcher Motor Velocity
         double velocity = robot.leftArm.getVelocity();
         telemetry.addData("Velocity", velocity);
         telemetry.update();
