@@ -161,14 +161,20 @@ public class Auto_Vision_KitBot_2025 extends LinearOpMode {
         // Auto aim
         autoAim(3);
         
-        // Shoot and intake
-        robot.indexMotor.setPower(-0.5);
-        robot.rightArm.setPower(-0.7);
+        // Shoot and intake - uncomment if using DC Motor for Indexer
+        //robot.indexMotor.setPower(-0.5);
+        //robot.rightArm.setPower(-0.7);
+
+        // Servo Indexer
+        robot.leftHand.setPosition(0);
+        robot.rightHand.setPosition(1);
         delay(8);
         
         // Stop Shooter and Indexer
         robot.leftArm.setVelocity(0);
-        robot.indexMotor.setPower(0);
+        //robot.indexMotor.setPower(0);   // DC Motor Indexer Off
+        robot.leftHand.setPosition(0.5); // Servos Off
+        robot.rightHand.setPosition(0.5); // Servos Off
     }
     
     // Go to April Tag Position
