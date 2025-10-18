@@ -56,6 +56,7 @@ public class Auto_Vision_KitBot_2025 extends LinearOpMode {
     // Adjust these numbers to suit your robot.
     final double DESIRED_DISTANCE = 45.0; //  this is how close the camera should get to the target (inches)
     final double DESIRED_HEADING = 5; 
+    final double DESIRED_YAW = 0;
 
     //  Set the GAIN constants to control the relationship between the measured position error, and how much power is
     //  applied to the drive motors to correct the error.
@@ -80,14 +81,13 @@ public class Auto_Vision_KitBot_2025 extends LinearOpMode {
 
         // Setup Robot, Camera, and PID Control
         robot.init(hardwareMap);
-        
-        //robot.leftArm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         robot.leftArm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         
-        // Set PID
+        // Set PID Values for Launcher
         PIDCoefficients pidSettings = new PIDCoefficients(NEW_P, NEW_I, NEW_D);
         robot.leftArm.setPIDCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidSettings);
         
+        // April Tag Self Driving Fields
         boolean targetFound     = false;    // Set to true when an AprilTag target is detected
         double  drive           = 0;        // Desired forward power/speed (-1 to +1)
         double  strafe          = 0;        // Desired strafe power/speed (-1 to +1)
@@ -110,46 +110,8 @@ public class Auto_Vision_KitBot_2025 extends LinearOpMode {
         
     }
     
-    // Sample Delay Code
-    // t is in seconds
-    public void delay(double t) { // Imitates the Arduino delay function
-        runtime.reset();
-        while (opModeIsActive() && (runtime.seconds() < t)) {
-            //telemetry.addData("Path", "Leg 1: %2.5f S Elapsed", runtime.seconds());
-            //telemetry.update();
-        }
-    }
-    
-        /**
-     * Initialize the AprilTag processor.
-     */
-    private void initAprilTag() {
-        // Create the AprilTag processor by using a builder.
-        aprilTag = new AprilTagProcessor.Builder().build();
+    //--- Autonomous Methods ---//
 
-        // Adjust Image Decimation to trade-off detection-range for detection-rate.
-        // e.g. Some typical detection data using a Logitech C920 WebCam
-        // Decimation = 1 ..  Detect 2" Tag from 10 feet away at 10 Frames per second
-        // Decimation = 2 ..  Detect 2" Tag from 6  feet away at 22 Frames per second
-        // Decimation = 3 ..  Detect 2" Tag from 4  feet away at 30 Frames Per Second
-        // Decimation = 3 ..  Detect 5" Tag from 10 feet away at 30 Frames Per Second
-        // Note: Decimation can be changed on-the-fly to adapt during a match.
-        aprilTag.setDecimation(2);
-
-        // Create the vision portal by using a builder.
-        if (USE_WEBCAM) {
-            visionPortal = new VisionPortal.Builder()
-                    .setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"))
-                    .addProcessor(aprilTag)
-                    .build();
-        } else {
-            visionPortal = new VisionPortal.Builder()
-                    .setCamera(BuiltinCameraDirection.BACK)
-                    .addProcessor(aprilTag)
-                    .build();
-        }
-    }
-    
     // Backup and Shoot Auto
     public void backupAndShoot() {
         // Start Launch Motor
@@ -175,6 +137,18 @@ public class Auto_Vision_KitBot_2025 extends LinearOpMode {
         //robot.indexMotor.setPower(0);   // DC Motor Indexer Off
         robot.leftHand.setPosition(0.5); // Servos Off
         robot.rightHand.setPosition(0.5); // Servos Off
+    }
+
+    //--- Utility Methods ---//
+
+    // Sample Delay Code
+    // t is in seconds
+    public void delay(double t) { // Imitates the Arduino delay function
+        runtime.reset();
+        while (opModeIsActive() && (runtime.seconds() < t)) {
+            //telemetry.addData("Path", "Leg 1: %2.5f S Elapsed", runtime.seconds());
+            //telemetry.update();
+        }
     }
     
     // Go to April Tag Position
@@ -222,9 +196,9 @@ public class Auto_Vision_KitBot_2025 extends LinearOpMode {
                 telemetry.update();
 
                 // Determine heading, range and Yaw (tag image rotation) error so we can use them to control the robot automatically.
-                double  rangeError      = (desiredTag.ftcPose.range - DESIRED_DISTANCE);
+                double  rangeError      = desiredTag.ftcPose.range - DESIRED_DISTANCE;
                 double  headingError    = desiredTag.ftcPose.bearing - DESIRED_HEADING;
-                double  yawError        = desiredTag.ftcPose.yaw;
+                double  yawError        = desiredTag.ftcPose.yaw - DESIRED_YAW;
     
                 // Use the speed and turn "gains" to calculate how we want the robot to move.
                 leftY  = -Range.clip(rangeError * SPEED_GAIN, -MAX_AUTO_SPEED, MAX_AUTO_SPEED);
@@ -240,5 +214,35 @@ public class Auto_Vision_KitBot_2025 extends LinearOpMode {
 
         }
         
+    }
+
+    /**
+     * Initialize the AprilTag processor.
+     */
+    private void initAprilTag() {
+        // Create the AprilTag processor by using a builder.
+        aprilTag = new AprilTagProcessor.Builder().build();
+
+        // Adjust Image Decimation to trade-off detection-range for detection-rate.
+        // e.g. Some typical detection data using a Logitech C920 WebCam
+        // Decimation = 1 ..  Detect 2" Tag from 10 feet away at 10 Frames per second
+        // Decimation = 2 ..  Detect 2" Tag from 6  feet away at 22 Frames per second
+        // Decimation = 3 ..  Detect 2" Tag from 4  feet away at 30 Frames Per Second
+        // Decimation = 3 ..  Detect 5" Tag from 10 feet away at 30 Frames Per Second
+        // Note: Decimation can be changed on-the-fly to adapt during a match.
+        aprilTag.setDecimation(2);
+
+        // Create the vision portal by using a builder.
+        if (USE_WEBCAM) {
+            visionPortal = new VisionPortal.Builder()
+                    .setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"))
+                    .addProcessor(aprilTag)
+                    .build();
+        } else {
+            visionPortal = new VisionPortal.Builder()
+                    .setCamera(BuiltinCameraDirection.BACK)
+                    .addProcessor(aprilTag)
+                    .build();
+        }
     }
 }
