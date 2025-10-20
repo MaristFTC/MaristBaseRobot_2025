@@ -110,7 +110,6 @@ public class TeleopStrafer_Vision_Quad_2025 extends OpMode {
         
         //robot.leftArm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         robot.leftArm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        armPos = robot.leftArm.getCurrentPosition();
         
         // Set PID for Launcher
         PIDCoefficients pidSettings = new PIDCoefficients(NEW_P, NEW_I, NEW_D);
@@ -186,7 +185,7 @@ public class TeleopStrafer_Vision_Quad_2025 extends OpMode {
             // Determine heading, range and Yaw (tag image rotation) error so we can use them to control the robot automatically.
             double  rangeError      = desiredTag.ftcPose.range - DESIRED_DISTANCE;
             double  headingError    = desiredTag.ftcPose.bearing - DESIRED_HEADING;
-            double  yawError        = desiredTag.ftcPose.yaw = DESIRED_YAW;
+            double  yawError        = desiredTag.ftcPose.yaw - DESIRED_YAW;
 
             // Use the speed and turn "gains" to calculate how we want the robot to move.
             leftY  = -Range.clip(rangeError * SPEED_GAIN, -MAX_AUTO_SPEED, MAX_AUTO_SPEED);
@@ -242,7 +241,7 @@ public class TeleopStrafer_Vision_Quad_2025 extends OpMode {
             robot.leftHand.setPosition(1);
             robot.rightHand.setPosition(0);
         }
-        else if (gamepad1.right_triger > 0.5) {
+        else if (gamepad1.right_trigger > 0.5) {
             robot.leftHand.setPosition(0);
             robot.rightHand.setPosition(1);
         }
