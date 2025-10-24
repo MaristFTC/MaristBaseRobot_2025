@@ -42,7 +42,7 @@ import java.util.concurrent.TimeUnit;
  * 
  */
 
-@TeleOp(name="MaristBot2025: Teleop Strafer 2025", group="Training")
+@TeleOp(name="MaristKitBot2025: Decode 2025", group="Training")
 //@Disabled
 public class TeleopStrafer_Quad_2025 extends OpMode {
 
@@ -113,7 +113,7 @@ public class TeleopStrafer_Quad_2025 extends OpMode {
         // Driving Code
         double leftX = gamepad1.left_stick_x * SPEED_CONTROL;
         double leftY = gamepad1.left_stick_y * SPEED_CONTROL;
-        double rightX = = gamepad1.right_stick_x * SPEED_CONTROL;
+        double rightX = gamepad1.right_stick_x * SPEED_CONTROL;
 
         // Apply desired axes motions to the drivetrain.
         robot.driveStrafer(leftX, leftY, rightX);
@@ -133,13 +133,13 @@ public class TeleopStrafer_Quad_2025 extends OpMode {
         
         // Feeder with DC Motor
         if (gamepad1.left_trigger > 0.5) {
-            //robot.indexMotor.setPower(0.5);
+            //robot.rightArm.setPower(0.5);
         }
         else if (gamepad1.right_trigger > 0.5) {
-            //robot.indexMotor.setPower(-0.5);
+            //robot.rightArm.setPower(-0.5);
         }
         else {
-            //robot.indexMotor.setPower(0);
+            //robot.rightArm.setPower(0);
         }
 
         // Feeder with Servos
@@ -158,13 +158,13 @@ public class TeleopStrafer_Quad_2025 extends OpMode {
         
         // Intake with DC Motor
         if (gamepad1.a) {
-            robot.rightArm.setPower(0);
+            //robot.intakeMotor.setPower(0);
         }
         if (gamepad1.b) {
-            robot.rightArm.setPower(0.7);
+            //robot.intakeMotor.setPower(0.7);
         }
         if (gamepad1.x) {
-            robot.rightArm.setPower(-0.7);
+            //robot.intakeMotor.setPower(-0.7);
         }
         
         // Get PID Information
