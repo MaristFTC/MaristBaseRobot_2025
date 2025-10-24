@@ -222,13 +222,13 @@ public class TeleopStrafer_Vision_Quad_2025 extends OpMode {
         
         // Feeder with DC Motor
         if (gamepad1.left_trigger > 0.5) {
-            //robot.indexMotor.setPower(0.5);
+            //robot.rightArm.setPower(0.5);
         }
         else if (gamepad1.right_trigger > 0.5) {
-            //robot.indexMotor.setPower(-0.5);
+            //robot.rightArm.setPower(-0.5);
         }
         else {
-            //robot.indexMotor.setPower(0);
+            //robot.rightArm.setPower(0);
         }
 
         // Feeder with Servos
@@ -247,13 +247,13 @@ public class TeleopStrafer_Vision_Quad_2025 extends OpMode {
         
         // Intake with DC Motor
         if (gamepad1.a) {
-            robot.rightArm.setPower(0);
+            //robot.intakeMotor.setPower(0);
         }
         if (gamepad1.b) {
-            robot.rightArm.setPower(0.7);
+            //robot.intakeMotor.setPower(0.7);
         }
         if (gamepad1.x) {
-            robot.rightArm.setPower(-0.7);
+            //robot.intakeMotor.setPower(-0.7);
         }
         
         // Get PID Information
