@@ -147,7 +147,7 @@ public class TeleopStrafer_Quad_2025 extends OpMode {
             robot.leftHand.setPosition(1);
             robot.rightHand.setPosition(0);
         }
-        else if (gamepad1.right_triger > 0.5) {
+        else if (gamepad1.right_trigger > 0.5) {
             robot.leftHand.setPosition(0);
             robot.rightHand.setPosition(1);
         }
