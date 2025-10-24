@@ -48,6 +48,8 @@ public class TeleopStrafer_Quad_2025 extends OpMode {
 
     /* Declare OpMode members. */
     MaristBaseRobot2025_Quad robot   = new MaristBaseRobot2025_Quad(); // use the class created to define a Robot's hardware
+
+    private double SPEED_CONTROL = 0.5;
     
     private double SHOOTER_FULL = -1600;
     private double SHOOTER_HALF = -1500;
@@ -109,9 +111,9 @@ public class TeleopStrafer_Quad_2025 extends OpMode {
     public void loop() {
         
         // Driving Code
-        double leftX = gamepad1.left_stick_x;
-        double leftY = gamepad1.left_stick_y;
-        double rightX = = gamepad1.right_stick_x;
+        double leftX = gamepad1.left_stick_x * SPEED_CONTROL;
+        double leftY = gamepad1.left_stick_y * SPEED_CONTROL;
+        double rightX = = gamepad1.right_stick_x * SPEED_CONTROL;
 
         // Apply desired axes motions to the drivetrain.
         robot.driveStrafer(leftX, leftY, rightX);
@@ -123,14 +125,7 @@ public class TeleopStrafer_Quad_2025 extends OpMode {
         if (gamepad1.dpad_left) {
             SHOOTER_VELOCITY = SHOOTER_HALF;
         }
-        if (gamepad1.dpad_right) {
-            SHOOTER_VELOCITY -= 1;
-        }
         if (gamepad1.dpad_down) {
-            SHOOTER_VELOCITY = 0;
-        }
-        
-        if (SHOOTER_VELOCITY > 0) {
             SHOOTER_VELOCITY = 0;
         }
         
