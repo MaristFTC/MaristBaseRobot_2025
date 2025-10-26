@@ -124,7 +124,6 @@ public class Auto_Vision_KitBot_2025 extends LinearOpMode {
         autoAim(3);
         
         // Shoot and intake - uncomment if using DC Motor for Indexer
-        //robot.indexMotor.setPower(-0.5);
         //robot.rightArm.setPower(-0.7);
 
         // Servo Indexer
@@ -134,7 +133,7 @@ public class Auto_Vision_KitBot_2025 extends LinearOpMode {
         
         // Stop Shooter and Indexer
         robot.leftArm.setVelocity(0);
-        //robot.indexMotor.setPower(0);   // DC Motor Indexer Off
+        //robot.rightArm.setPower(0);   // DC Motor Indexer Off
         robot.leftHand.setPosition(0.5); // Servos Off
         robot.rightHand.setPosition(0.5); // Servos Off
     }
