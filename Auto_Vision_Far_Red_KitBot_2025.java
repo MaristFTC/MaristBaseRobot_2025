@@ -36,8 +36,8 @@ import com.qualcomm.robotcore.util.Range;
 import java.util.List;
 
 
-@Autonomous(name="Auto_Vision_Near_Kitbot_2025", group="Vision")
-public class Auto_Vision_KitBot_2025 extends LinearOpMode {
+@Autonomous(name="Auto_Vision_Far_Red_Kitbot_2025", group="Vision")
+public class Auto_Vision_Far_Red_KitBot_2025 extends LinearOpMode {
 
     /* Declare OpMode members. */
     MaristBaseRobot2025_Quad robot   = new MaristBaseRobot2025_Quad();   
@@ -105,38 +105,35 @@ public class Auto_Vision_KitBot_2025 extends LinearOpMode {
         waitForStart();
         
         // Call Code for Autonomous: Sample Method Below
-        backupAndShoot();
+        driveOffLine();
 
         
     }
     
     //--- Autonomous Methods ---//
 
-    // Backup and Shoot Auto
-    public void backupAndShoot() {
+    // Forward and Shoot Auto
+    public void driveOffLine() {
         // Start Launch Motor
         robot.leftArm.setVelocity(SHOOTER_HALF);
         
-        // backup
-        robot.move(-36, 0.5);
-        
-        // Auto aim
-        autoAim(3);
-        
-        // Shoot and intake - uncomment if using DC Motor for Indexer
-        //robot.indexMotor.setPower(-0.5);
-        //robot.rightArm.setPower(-0.7);
+        // Drive Off the Line
+        robot.move(36, 0.5);
 
-        // Servo Indexer
-        robot.leftHand.setPosition(0);
-        robot.rightHand.setPosition(1);
-        delay(8);
-        
-        // Stop Shooter and Indexer
+        // Turn Right
+        robot.turn(45, 0.5);
+
+        // Aim
+        autoAim(5);
+
+        // Launch
+        robot.rightArm.setPower(0.8);
+        delay(5);
+
+        // Stop All Motors
         robot.leftArm.setVelocity(0);
-        //robot.indexMotor.setPower(0);   // DC Motor Indexer Off
-        robot.leftHand.setPosition(0.5); // Servos Off
-        robot.rightHand.setPosition(0.5); // Servos Off
+        robot.rightArm.setPower(0);
+
     }
 
     //--- Utility Methods ---//
